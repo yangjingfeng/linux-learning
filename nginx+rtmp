@@ -1,3 +1,4 @@
+yum install gcc pcre-devel openssl-devel
 tar -xf nginx-1.13.12.tar.gz 
 cd nginx-1.13.12
 ./configure --prefix=/usr/local/nginx --add-module=/root/nginx-rtmp-module-1.2.1/
@@ -21,6 +22,6 @@ rtmp {
 
 create /usr/local/nginx/html/live
 
-download OBS-Studio-23.2.1-Full-Installer-x64
+download https://obsproject.com/download
 
-download  VLC media player
+download  https://www.videolan.org/vlc/
