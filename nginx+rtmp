@@ -1,0 +1,26 @@
+tar -xf nginx-1.13.12.tar.gz 
+cd nginx-1.13.12
+./configure --prefix=/usr/local/nginx --add-module=/root/nginx-rtmp-module-1.2.1/
+make && make install
+
+add config /usr/local/nginx/conf/nginx.conf
+rtmp {    
+
+    server {
+        listen 1935;
+        chunk_size 4000;
+
+        application live {
+            live on;
+            hls on;    
+            hls_path /usr/local/nginx/html/live;    
+            hls_fragment 5s;    
+        }    
+    }    
+}
+
+create /usr/local/nginx/html/live
+
+download OBS-Studio-23.2.1-Full-Installer-x64
+
+download  VLC media player
