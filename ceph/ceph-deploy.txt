@@ -1,0 +1,81 @@
+
+1、设置主机名称
+hostnamectl set-hostname  master.ceph.com
+hostnamectl set-hostname  node01.ceph.com
+hostnamectl set-hostname  node02.ceph.com
+
+echo "192.168.1.206 master.ceph.com master
+192.168.1.195 node01.ceph.com node01
+192.168.1.156 node02.ceph.com node02" >> /etc/hosts
+
+yum -y install ntpdate
+ntpdate cn.ntp.org.cn
+
+useradd cephadm
+echo 123 | passwd --stdin cephadm
+echo "cephadm ALL = (root) NOPASSWD:ALL" > /etc/sudoers.d/cephadm
+
+
+su - cephadm
+ssh-keygen 
+ssh-copy-id
+
+sudo yum -y install ceph-deploy python-pip
+
+
+mkdir my-cluster
+cd my-cluster
+
+ceph-deploy new master.ceph.com node01.ceph.com node02.ceph.com
+echo "public_network = 192.168.1.0/24" >> ceph.conf 
+echo "cluster_network = 192.168.1.0/24" >> ceph.conf 
+
+
+
+sudo yum -y install ceph ceph-radosgw
+
+ceph-deploy mon create-initial
+
+ceph-deploy admin master.ceph.com node01.ceph.com node02.ceph.com
+
+sudo chown cephadm.cephadm /etc/ceph -R
+
+for dev in /dev/sd{b..d};do
+  ceph-deploy disk zap master.ceph.com:$dev
+  ceph-deploy osd create master.ceph.com:$dev
+done
+
+for dev in /dev/sd{b..d};do
+  ceph-deploy disk zap node01.ceph.com:$dev
+  ceph-deploy osd create node01.ceph.com:$dev
+done
+
+for dev in /dev/sd{b..d};do
+  ceph-deploy disk zap node02.ceph.com:$dev
+  ceph-deploy osd create node02.ceph.com:$dev
+done
+
+ceph-deploy mgr create master.ceph.com node01.ceph.com node02.ceph.com
+ceph config set mgr mgr/dashboard/ssl false
+ceph mgr module enable dashboard
+ceph dashboard ac-user-create admin 123456 administrator
+ceph dashboard set-login-credentials admin 123456
+### http://mirrors.163.com/ceph/rpm-mimic/el7/x86_64/
+
+
+创建pool
+ceph osd pool create cephfs_data 96 96
+ceph osd pool create cephfs_metadata 32 32
+ceph fs new cephfs cephfs_metadata cephfs_data
+ceph fs ls
+ceph mds stat
+
+删除系列
+ceph fs rm cephfs --yes-i-really-mean-it
+ceph osd pool delete cephfs_data cephfs_data --yes-i-really-really-mean-it
+
+挂载ceph文件系统
+sudo mkdir /data
+sudo mount -t ceph master:6789,node01:6789,node02:6789:/ /data -o name=admin,secret="AQBi6o9eRy+SKRAAhWygHkb7+8hi91ketKlzhA=="
+
+
