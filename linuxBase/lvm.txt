@@ -1,0 +1,93 @@
+[root@localhost ~]# pvcreate -v /dev/sdb
+    Wiping internal VG cache
+    Wiping cache of LVM-capable devices
+    Wiping signatures on new PV /dev/sdb.
+    Set up physical volume for "/dev/sdb" with 41943040 available sectors.
+    Zeroing start of device /dev/sdb.
+    Writing physical volume data to disk "/dev/sdb".
+  Physical volume "/dev/sdb" successfully created.
+[root@localhost ~]# pvs
+  PV         VG     Fmt  Attr PSize   PFree
+  /dev/sda2  centos lvm2 a--  <19.00g     0
+  /dev/sdb          lvm2 ---   20.00g 20.00g
+[root@localhost ~]# man vg
+No manual entry for vg
+[root@localhost ~]# pvremove /dev/sdb
+  Labels on physical volume "/dev/sdb" successfully wiped.
+[root@localhost ~]# pvs
+  PV         VG     Fmt  Attr PSize   PFree
+  /dev/sda2  centos lvm2 a--  <19.00g    0
+
+
+[root@localhost ~]# vgcreate myvg /dev/sdb
+  Volume group "myvg" successfully created
+[root@localhost ~]# vgremove myvg
+  Volume group "myvg" successfully removed
+[root@localhost ~]# vgcreate -s 8M myvg /dev/sdb
+  Volume group "myvg" successfully created
+[root@localhost ~]# vgextend myvg /dev/sdc
+  Volume group "myvg" successfully extended
+[root@localhost ~]# vgs
+  VG     #PV #LV #SN Attr   VSize   VFree
+  centos   1   2   0 wz--n- <19.00g     0
+  myvg     2   0   0 wz--n-  39.98g 39.98g
+
+
+[root@localhost ~]# pvmove /dev/sdc
+  No data to move for myvg
+[root@localhost ~]# vgreduce myvg /dev/sdc
+  Removed "/dev/sdc" from volume group "myvg"
+[root@localhost ~]# vgs
+  VG     #PV #LV #SN Attr   VSize   VFree
+  centos   1   2   0 wz--n- <19.00g     0
+  myvg     1   0   0 wz--n-  19.99g 19.99g
+[root@localhost ~]# lvcreate -L 2G -n mylv myvg
+  Logical volume "mylv" created.
+[root@localhost ~]# lvs
+  LV   VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  root centos -wi-ao---- <17.00g
+  swap centos -wi-ao----   2.00g
+  mylv myvg   -wi-a-----   2.00g
+[root@localhost ~]# mkfs.xfs /dev/mapper/myvg-mylv
+meta-data=/dev/mapper/myvg-mylv  isize=512    agcount=4, agsize=131072 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=524288, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+[root@localhost ~]# ls -l /data
+ls: cannot access /data: No such file or directory
+[root@localhost ~]# mkdir /data
+[root@localhost ~]# mount /dev/mapper/myvg-mylv /data/
+[root@localhost ~]# df
+Filesystem              1K-blocks    Used Available Use% Mounted on
+/dev/mapper/centos-root  17811456  966452  16845004   6% /
+devtmpfs                   488744       0    488744   0% /dev
+tmpfs                      499848       0    499848   0% /dev/shm
+tmpfs                      499848    6740    493108   2% /run
+tmpfs                      499848       0    499848   0% /sys/fs/cgroup
+/dev/sda1                 1038336  127548    910788  13% /boot
+/dev/sr0                  4414592 4414592         0 100% /mnt/cdrom
+tmpfs                       99972       0     99972   0% /run/user/0
+/dev/mapper/myvg-mylv     2086912   32944   2053968   2% /data
+[root@localhost ~]#
+
+
+[root@localhost ~]# lvextend -L +2G /dev/mapper/myvg-mylv
+  Size of logical volume myvg/mylv changed from 2.00 GiB (256 extents) to 4.00 GiB (512 extents).
+  Logical volume myvg/mylv successfully resized.
+
+[root@localhost ~]# xfs_growfs /data/
+meta-data=/dev/mapper/myvg-mylv  isize=512    agcount=4, agsize=131072 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0 spinodes=0
+data     =                       bsize=4096   blocks=524288, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal               bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+data blocks changed from 524288 to 1048576
