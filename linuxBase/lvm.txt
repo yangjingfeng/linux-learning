@@ -91,3 +91,20 @@ log      =internal               bsize=4096   blocks=2560, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
 data blocks changed from 524288 to 1048576
+
+###逻辑卷做快照
+[root@localhost ~]# lvcreate -s -L 512M -n mylvsnap  /dev/mapper/myvg-mylv
+  Using default stripesize 64.00 KiB.
+  Logical volume "mylvsnap" created.
+
+[root@localhost ~]# mount /dev/mapper/myvg-mylvsnap /mydata/ -o nouuid,ro
+[root@localhost ~]# blkid
+/dev/sda1: UUID="6978403c-ad7b-4f5d-84ec-b9d91f8f91a5" TYPE="xfs"
+/dev/sda2: UUID="yvjZKc-SVxR-tJUI-fFWe-YQOo-0y6V-ZSjRAN" TYPE="LVM2_member"
+/dev/sdb: UUID="kaCGiv-j4RD-Qa4z-yD0Y-gMcV-uu2v-tlw7gH" TYPE="LVM2_member"
+/dev/sr0: UUID="2017-09-06-10-51-00-00" LABEL="CentOS 7 x86_64" TYPE="iso9660" PTTYPE="dos"
+/dev/mapper/centos-root: UUID="61020627-699f-42ec-b92b-caf67645042c" TYPE="xfs"
+/dev/mapper/centos-swap: UUID="8bb6f199-4757-4337-8034-f4096b449c2d" TYPE="swap"
+/dev/mapper/myvg-mylv: UUID="6dc8ed6f-e36d-4947-bc6f-6a0d24b8a905" TYPE="xfs"
+/dev/mapper/myvg-mylvsnap: UUID="6dc8ed6f-e36d-4947-bc6f-6a0d24b8a905" TYPE="xfs"
+
