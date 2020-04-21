@@ -18,7 +18,6 @@ for i in `seq 1 100`;do
   mysql -h192.168.1.206 -umydb -pmydb mydb -e "insert into mytable values(\"$name\")"
 done
 
-
 #
 #!/bin/bash
 for name in `mysql -h192.168.1.206 -umydb -pmydb mydb --skip-column-names -e "select * from mytable"`;do
